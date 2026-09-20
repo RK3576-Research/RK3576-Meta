@@ -147,6 +147,25 @@ working debug port is evidence regardless of how it came to be working.
   cable, which can back-feed enough to prevent a full reset.
 - This is how the incorrect four-register claim survived initial testing.
 
+## Recovering a hung board
+
+A payload that hangs leaves the board unable to accept another upload:
+maskrom's endpoint 0 stops answering, so the usual
+`reboot_to_maskrom` payload cannot be delivered.
+
+```sh
+./reset.sh
+```
+
+- Writes the boot-mode magic and triggers a global soft reset through the
+  MEM-AP.
+- Uses only the debug port, so it works when maskrom does not.
+- Verified by uploading a four-byte payload that branches to itself: endpoint
+  0 goes stale, and this returns the board to live maskrom.
+
+No physical access is required, so hardware iteration does not stall on a
+hung payload.
+
 ## Continuity testing
 
 The adapter cannot be used to check its own wiring:
@@ -173,6 +192,7 @@ it:
 | path | contents |
 |---|---|
 | `scan.sh` | scan the debug port; no payload needed |
+| `reset.sh` | return a hung board to maskrom over SWD |
 | `sweep_pins.sh` | continuity, measured from the target side |
 | `oocd/tigard-swd.cfg` | adapter config; stock `tigard.cfg` omits `SWD_EN` and refuses SWD |
 | `oocd/dap.cfg` | enumerate DP and APs |
